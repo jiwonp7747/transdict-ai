@@ -5,7 +5,7 @@ on:
     branches:
       - prod
     paths:
-      - 'helms/**' # chart modifications only
+      - 'helm/**' # chart modifications only
 
   workflow_dispatch: # manually deploy
     inputs:
