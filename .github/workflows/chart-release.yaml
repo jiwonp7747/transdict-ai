@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          sparse-checkout: 'helm/'
 
       - name: Configure Git
         run: |
@@ -29,6 +30,6 @@ jobs:
       - name: Run chart-releaser # helm package and index
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          charts_dir: charts
+          charts_dir: helm/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
