@@ -1,9 +1,0 @@
-node_modules
-dist
-build
-.git
-.env
-Dockerfile
-.dockerignore
-claude.md
-docs/
