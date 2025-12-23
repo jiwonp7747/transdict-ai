@@ -5,7 +5,21 @@ on:
     branches:
       - prod
     paths:
-      - 'charts/**' # chart modifications only
+      - 'helms/**' # chart modifications only
+
+  workflow_dispatch: # manually deploy
+    inputs:
+      reason:
+        description: 'Reason for manual release'
+        required: false
+        default: 'Manual chart release'
+      description:
+        description: 'Detailed Release Notes'
+        required: true
+        default: 'Fixed minor bugs and updated chart version'
+      tag_version:
+        description: 'Release Tag (e.g., v1.0.0)'
+        required: false
 
 jobs:
   release:
