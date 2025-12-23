@@ -4,6 +4,7 @@ import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { Modal, Button } from 'react-bootstrap';
 import { AIGenerationInput, AIGenerationResult, LanguageType } from './types';
 import dictionaryService from '../../services/dictionaryService';
+import aiGenerationService, { AIGenerationRequestItem } from '../../services/aiGenerationService';
 import './AIGenerationModal.scss';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -254,7 +255,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
 
     try {
       // 요청 데이터 준비
-      const requestBody = validInputs.map((input) => ({
+      const requestBody: AIGenerationRequestItem[] = validInputs.map((input) => ({
         context_id: contextId,
         term_key: input.term_key,
         content: input.content,
@@ -262,97 +263,36 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
         description: input.description,
       }));
 
-      console.log('=== AI Generation Request ===');
-      console.log('Request URL:', 'http://localhost:8000/sse/ai');
-      console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-      console.log('Context ID:', contextId);
-      console.log('Valid Inputs:', validInputs);
-
-      // SSE API 요청
-      const response = await fetch('http://localhost:8000/sse/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      // SSE API 요청 (서비스 사용)
+      await aiGenerationService.generateWithSSE(requestBody, (event) => {
+        if (event.status === 'progress') {
+          // 진행률 표시
+          console.log('Progress:', event.data.percent + '%');
+        } else if (event.status === 'result') {
+          // 결과 업데이트
+          const result = event.data.result;
+          setResultData((prev) =>
+            prev.map((item) =>
+              item.term_key === result.term_key
+                ? {
+                    id: item.id,
+                    term_key: result.term_key,
+                    ko: result.ko,
+                    en: result.en,
+                    ch: result.ch,
+                    ve: result.ve,
+                    ja: result.ja,
+                    status: 'completed',
+                    actions: '',
+                  }
+                : item
+            )
+          );
+        } else if (event.status === 'done') {
+          // 완료
+          console.log('Generation completed successfully');
+        }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      let buffer = '';
-
-      // SSE 스트림 읽기
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          console.log('SSE stream finished');
-          break;
-        }
-
-        // 버퍼에 새로운 데이터 추가
-        buffer += decoder.decode(value, { stream: true });
-
-        // 줄 단위로 분리
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // 마지막 불완전한 줄은 버퍼에 유지
-
-        // 각 줄 처리
-        for (const line of lines) {
-          // SSE 형식: "data: {...}"
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.slice(6).trim();
-            if (!jsonStr) continue;
-
-            try {
-              const data = JSON.parse(jsonStr);
-
-              if (data.status === 'progress') {
-                // 진행률 표시
-                console.log('Progress:', data.data?.percent + '%');
-              } else if (data.status === 'result') {
-                // 결과 업데이트
-                const result = data.data.result;
-                setResultData((prev) =>
-                  prev.map((item) =>
-                    item.term_key === result.term_key
-                      ? {
-                          id: item.id,
-                          term_key: result.term_key,
-                          ko: result.ko,
-                          en: result.en,
-                          ch: result.ch,
-                          ve: result.ve,
-                          ja: result.ja,
-                          status: 'completed',
-                          actions: '',
-                        }
-                      : item
-                  )
-                );
-              } else if (data.status === 'done') {
-                // 완료
-                console.log('Generation completed successfully');
-                break;
-              } else if (data.status === 'error') {
-                // 에러
-                throw new Error(data.message || 'Generation failed');
-              }
-            } catch (parseError) {
-              console.error('Failed to parse SSE message:', parseError, line);
-            }
-          }
-        }
-      }
 
       // 완료 후 처리
       onComplete?.();
