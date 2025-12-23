@@ -1,27 +1,28 @@
-# ====== 1단계: 빌드 환경 (Node.js) ======
+# build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 종속성 설치 (캐싱 활용을 위해 package.json 먼저 복사)
+# npm install
 COPY package.json package-lock.json ./
 RUN npm install
 
-# 소스 코드 복사 및 빌드
+# source copy
 COPY . .
 RUN npm run build
 
-# ====== 2단계: 실행 환경 (Nginx) ======
+# run stage
 FROM nginx:stable-alpine
 
-# 빌드 단계에서 생성된 정적 파일들을 Nginx 기본 경로로 복사
+# build results copy
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# env 주입 스크립트 nginx가 실행될 때 자동으로 실행
+# env injection on runtime
 COPY ./env.sh /docker-entrypoint.d/env.sh
-RUN chmod +x /docker-entrypoint.d/env.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.d/env.sh && \
+    chmod +x /docker-entrypoint.d/env.sh
 
-# Nginx 설정 파일이 따로 있다면 복사 (선택 사항)
+# nginx extra setting
 # COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
