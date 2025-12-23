@@ -1,0 +1,12 @@
+apiVersion: v1
+entries:
+  transdict-ai:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2025-12-23T05:07:00.538833661Z"
+    digest: b00fa3dc994add4a497aebe334d9d7fe9be0d62af0bfec8a768811a435a5183d
+    name: transdict-ai
+    urls:
+    - https://github.com/jiwonp7747/transdict-ai/releases/download/transdict-ai-0.1.1/transdict-ai-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-12-23T05:07:00.53884388Z"
