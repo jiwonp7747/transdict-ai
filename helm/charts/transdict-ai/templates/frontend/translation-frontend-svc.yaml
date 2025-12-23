@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: "{{.Values.appName}}-frontend-svc"
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  selector:
+    app: "{{.Values.appName}}-frontend"
+
+  type: {{.Values.frontend.port.type}}
+
+  ports:
+    - port: {{.Values.frontend.port.containerPort}}
+      protocol: TCP
+      targetPort: {{.Values.frontend.port.containerPort}}
+      {{- if eq .Values.frontend.port.type "NodePort" }}
+      {{- if .Values.frontend.port.nodePort }}
+      nodePort: {{ .Values.frontend.port.nodePort }}
+      {{- end }}
+      {{- end }}

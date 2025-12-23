@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-db-init-sql
+  namespace: {{ .Release.Namespace }}
+data:
+  init.sql: |
+    CREATE TABLE "CONTEXT" (
+        context_id BIGSERIAL PRIMARY KEY,
+        context_name varchar,
+        description VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "DICTIONARY" (
+        dict_id BIGSERIAL PRIMARY KEY,
+        term_key VARCHAR NULL,
+        description varchar,
+        context_id bigint,
+        ko varchar,
+        en varchar,
+        ch varchar,
+        ve varchar,
+        ja varchar,
+        created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+        updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "JSON_TEMPLATE" (
+        template_id BIGSERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description VARCHAR(255),
+        format_config JSONB NOT NULL,
+        created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+        updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
+    );
+
+    INSERT INTO "JSON_TEMPLATE" (
+        name, description, format_config
+    ) VALUES (
+        'default', 'default template',
+        '{
+          "row_structure": {
+            "term_key": "{term_key}",
+            "kr": "{ko}",
+            "en": "{en}",
+            "ch": "{ch}",
+            "ve": "{ve}",
+            "ja": "{ja}"
+          }
+        }'::jsonb
+    );

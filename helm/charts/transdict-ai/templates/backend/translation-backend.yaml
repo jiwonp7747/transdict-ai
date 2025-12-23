@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.appName }}-backend-deploy"
+  labels:
+    app: "{{.Values.appName}}-backend-deploy"
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{.Values.appName}}-backend"
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: "{{.Values.appName}}-backend"
+    spec:
+      containers:
+      - image: "jiwon9908/transdict-ai-backend:{{ .Chart.AppVersion }}"
+        imagePullPolicy: Always
+        name: "{{.Values.appName}}-backend"
+        resources: {}
+        envFrom:
+          - secretRef:
+              name: "{{ .Values.appName }}-backend-secret"

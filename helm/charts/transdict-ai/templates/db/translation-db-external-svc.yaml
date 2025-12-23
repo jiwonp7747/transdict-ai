@@ -1,0 +1,20 @@
+{{- if eq .Values.db.port.type "NodePort" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Values.appName }}-db-external"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: "{{ .Values.appName }}-db-external"
+spec:
+  type: NodePort
+  ports:
+  - port: {{ .Values.db.port.containerPort }}
+    targetPort: {{ .Values.db.port.containerPort }}
+    protocol: TCP
+    {{- if .Values.db.port.nodePort }}
+    nodePort: {{ .Values.db.port.nodePort }}
+    {{- end }}
+  selector:
+    app: "{{ .Values.appName }}-db"
+{{- end }}

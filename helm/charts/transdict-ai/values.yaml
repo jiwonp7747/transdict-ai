@@ -1,0 +1,58 @@
+# values.yaml
+
+# Common Setting
+appName: "transdict-ai"
+namespace: "transdict-ai"
+
+# Frontend Setting
+# Deploy
+frontend:
+  replicaCount: 1
+
+  image:
+    pullPolicy: IfNotPresent
+
+  port:
+    type: NodePort # ClusterIP, NodePort
+    containerPort: 80
+    nodePort: 30080
+  resources: {}
+
+# Backend Setting
+# Deploy
+backend:
+  replicaCount: 1
+
+  image:
+    pullPolicy: IfNotPresent
+
+  # real client access address info
+  apiUrl: "localhost"
+  apiPort: 30081
+
+  port:
+    type: NodePort # ClusterIP, NodePort
+    containerPort: 8000
+    nodePort: 30081
+  resources: {}
+
+  # Secret
+  secret:
+    openApiKey: ""
+
+
+# Database Setting
+#
+
+db:
+  name: "postgres"
+  port:
+    type: NodePort # ClusterIP or NodePort
+    containerPort: 5432
+
+    # if NodePort
+    nodePort: 30543
+  user: "postgres"
+  secret:
+    password: "password"
+

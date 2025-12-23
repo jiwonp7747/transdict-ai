@@ -1,0 +1,63 @@
+.dictionary-grid-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dictionary-grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.dictionary-grid-header h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+// 테마 색상 버튼 스타일
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border-color: #667eea !important;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%) !important;
+    border-color: #5568d3 !important;
+  }
+
+  &:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    opacity: 0.65;
+  }
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  border-color: #28a745 !important;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #218838 0%, #1ba87e 100%) !important;
+    border-color: #218838 !important;
+  }
+
+  &:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    opacity: 0.65;
+  }
+}
