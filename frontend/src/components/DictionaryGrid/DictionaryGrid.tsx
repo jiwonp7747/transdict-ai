@@ -5,12 +5,13 @@ import { DictionaryEntry } from '../../types/context';
 import contextService from '../../services/contextService';
 import dictionaryService from '../../services/dictionaryService';
 import AIGenerationModal from '../AIGenerationModal/AIGenerationModal';
+import { parseCSV, normalizeColumnName } from '../../utils/csvParser';
+import { CommonButton, ButtonPurpose, ButtonIcons } from '../common';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import './DictionaryGrid.scss';
 import {AIGenerationResult} from "../AIGenerationModal/types";
-import {Button} from "react-bootstrap";
 
 interface DictionaryGridProps {
   contextId: number | null;
@@ -23,6 +24,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
   const [showAIModal, setShowAIModal] = useState(false);
 
   const gridRef = useRef<any>(null);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   const columnDefs = useMemo<ColDef<DictionaryEntry>[]>(
     () => [
@@ -130,13 +132,12 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
         width: 100,
         cellRenderer: (params: ICellRendererParams<DictionaryEntry>) => {
           return (
-              <Button
-                  size="sm"
-                  variant="outline-danger"
+              <CommonButton
+                  variant={ButtonPurpose.DELETE}
                   onClick={() => handleDeleteDict(params.data?.dict_id)}
               >
                 Delete
-              </Button>
+              </CommonButton>
           );
         },
       },
@@ -239,6 +240,150 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
     // AI 생성 완료 후 그리드 새로고침
     if (contextId) {
       loadDictionaryEntries(contextId);
+    }
+  };
+
+  // CSV Upload 버튼 클릭
+  const handleCSVUploadClick = () => {
+    if (!contextId) {
+      alert('Please select a context first');
+      return;
+    }
+    csvFileInputRef.current?.click();
+  };
+
+  // CSV 파일을 DictionaryEntry 데이터로 변환
+  const mapCSVToDictionaryData = (headers: string[], rows: string[][]): Partial<DictionaryEntry>[] => {
+    // 컬럼명 매핑 테이블
+    const columnMapping: { [key: string]: string } = {
+      'term_key': 'term_key',
+      'description': 'description',
+      'korean': 'ko',
+      'english': 'en',
+      'chinese': 'ch',
+      'vietnamese': 've',
+      'japanese': 'ja',
+    };
+
+    // 헤더를 정규화하고 매핑
+    const headerMap = new Map<number, string>();
+
+    headers.forEach((header, index) => {
+      const normalized = normalizeColumnName(header);
+      const mappedField = columnMapping[normalized];
+      if (mappedField) {
+        headerMap.set(index, mappedField);
+      }
+    });
+
+    // 각 row를 DictionaryEntry로 변환
+    return rows.map((row, rowIndex) => {
+      const entry: Partial<DictionaryEntry> = {
+        dict_id: 0, // Temporary ID
+        term_key: '',
+        description: '',
+        context_id: contextId!,
+        ko: '',
+        en: '',
+        ch: '',
+        ve: '',
+        ja: '',
+        actions: ''
+      };
+
+      // 필드 매핑
+      headerMap.forEach((field, colIndex) => {
+        const value = row[colIndex] || '';
+        if (field in entry) {
+          (entry as any)[field] = value;
+        }
+      });
+
+      return entry;
+    }).filter(entry => entry.term_key && entry.term_key.trim()); // term_key가 있는 행만 유지
+  };
+
+  // CSV 파일 업로드 핸들러
+  const handleCSVFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 형식 검증
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a CSV file');
+      event.target.value = '';
+      return;
+    }
+
+    // 파일 크기 제한 (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size exceeds 5MB limit');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      // CSV 파싱
+      const { headers, rows } = await parseCSV(file);
+
+      if (rows.length === 0) {
+        alert('CSV file has no data rows');
+        event.target.value = '';
+        return;
+      }
+
+      // 행 개수 제한 (1000개)
+      if (rows.length > 1000) {
+        if (!window.confirm(`CSV has ${rows.length} rows. Only first 1000 rows will be imported. Continue?`)) {
+          event.target.value = '';
+          return;
+        }
+      }
+
+      // CSV 데이터를 DictionaryEntry 데이터로 변환
+      const newEntries = mapCSVToDictionaryData(headers, rows.slice(0, 1000));
+
+      if (newEntries.length === 0) {
+        alert('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.');
+        event.target.value = '';
+        return;
+      }
+
+      // 사용자 확인
+      if (!window.confirm(`Import ${newEntries.length} entries from CSV?`)) {
+        event.target.value = '';
+        return;
+      }
+
+      // DB에 저장
+      const dictionaries = newEntries.map((entry) => ({
+        term_key: entry.term_key || null,
+        description: entry.description || null,
+        context_id: contextId!,
+        ko: entry.ko || null,
+        en: entry.en || null,
+        ch: entry.ch || null,
+        ve: entry.ve || null,
+        ja: entry.ja || null,
+      }));
+
+      const response = await dictionaryService.createDictList(dictionaries);
+
+      if (response.success) {
+        alert(`Successfully imported ${newEntries.length} entries!`);
+        // 성공 후 그리드 새로고침
+        loadDictionaryEntries(contextId!);
+      } else {
+        throw new Error(response.error || 'Failed to import CSV data');
+      }
+    } catch (error) {
+      console.error('CSV upload failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to import CSV: ${errorMessage}`);
+    } finally {
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -427,37 +572,50 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   return (
     <div className="dictionary-grid-container">
+      {/* Hidden CSV file input */}
+      <input
+        type="file"
+        ref={csvFileInputRef}
+        accept=".csv"
+        style={{ display: 'none' }}
+        onChange={handleCSVFileChange}
+      />
+
       <div className="dictionary-grid-header">
         <h5>Dictionary Entries</h5>
         <div className="button-group">
-          {/*<button*/}
-          {/*  className="btn btn-sm btn-primary"*/}
-          {/*  onClick={handleAddClick}*/}
-          {/*  disabled={!contextId}*/}
-          {/*>*/}
-          {/*  + Add*/}
-          {/*</button>*/}
-          <button
-            className="btn btn-sm btn-success"
+          <CommonButton
+            variant={ButtonPurpose.UPLOAD}
+            icon={ButtonIcons.UPLOAD}
+            onClick={handleCSVUploadClick}
+            disabled={!contextId}
+          >
+            CSV Upload
+          </CommonButton>
+          <CommonButton
+            variant={ButtonPurpose.UPLOAD}
+            icon={ButtonIcons.AI}
             onClick={handleAIGenerateClick}
             disabled={!contextId}
           >
-            🤖 AI Generate
-          </button>
-          <button
-            className="btn btn-sm btn-info"
+            AI Generate
+          </CommonButton>
+          <CommonButton
+            variant={ButtonPurpose.EXPORT}
+            icon={ButtonIcons.EXPORT}
             onClick={handleExportCSV}
             disabled={!contextId || !rowData || rowData.length === 0}
           >
-            📥 Export CSV
-          </button>
-          <button
-            className="btn btn-sm btn-info"
+            Export CSV
+          </CommonButton>
+          <CommonButton
+            variant={ButtonPurpose.EXPORT}
+            icon={ButtonIcons.EXPORT}
             onClick={handleExportJSON}
             disabled={!contextId || !rowData || rowData.length === 0}
           >
-            📥 Export JSON
-          </button>
+            Export JSON
+          </CommonButton>
         </div>
       </div>
 
