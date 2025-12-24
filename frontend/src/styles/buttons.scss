@@ -1,0 +1,232 @@
+// Common Button Styles
+// This file defines consistent button styles used across the application
+
+// Button variant colors
+$button-variants: (
+  'primary': (
+    'bg': #0d6efd,
+    'bg-hover': #0b5ed7,
+    'border': #0d6efd,
+    'text': #fff
+  ),
+  'secondary': (
+    'bg': #6c757d,
+    'bg-hover': #5c636a,
+    'border': #6c757d,
+    'text': #fff
+  ),
+  'success': (
+    'bg': #198754,
+    'bg-hover': #157347,
+    'border': #198754,
+    'text': #fff
+  ),
+  'danger': (
+    'bg': #dc3545,
+    'bg-hover': #bb2d3b,
+    'border': #dc3545,
+    'text': #fff
+  ),
+  'warning': (
+    'bg': #ffc107,
+    'bg-hover': #ffca2c,
+    'border': #ffc107,
+    'text': #000
+  ),
+  'info': (
+    'bg': #0dcaf0,
+    'bg-hover': #31d2f2,
+    'border': #0dcaf0,
+    'text': #000
+  ),
+  'light': (
+    'bg': #f8f9fa,
+    'bg-hover': #f9fafb,
+    'border': #f8f9fa,
+    'text': #000
+  ),
+  'dark': (
+    'bg': #212529,
+    'bg-hover': #1c1f23,
+    'border': #212529,
+    'text': #fff
+  )
+);
+
+// Outline variant colors
+$button-outline-variants: (
+  'outline-primary': (
+    'border': #0d6efd,
+    'text': #0d6efd,
+    'bg-hover': #0d6efd,
+    'text-hover': #fff
+  ),
+  'outline-secondary': (
+    'border': #6c757d,
+    'text': #6c757d,
+    'bg-hover': #6c757d,
+    'text-hover': #fff
+  ),
+  'outline-success': (
+    'border': #198754,
+    'text': #198754,
+    'bg-hover': #198754,
+    'text-hover': #fff
+  ),
+  'outline-danger': (
+    'border': #dc3545,
+    'text': #dc3545,
+    'bg-hover': #dc3545,
+    'text-hover': #fff
+  ),
+  'outline-warning': (
+    'border': #ffc107,
+    'text': #ffc107,
+    'bg-hover': #ffc107,
+    'text-hover': #000
+  ),
+  'outline-info': (
+    'border': #0dcaf0,
+    'text': #0dcaf0,
+    'bg-hover': #0dcaf0,
+    'text-hover': #000
+  )
+);
+
+// Button sizes
+$button-sizes: (
+  'sm': (
+    'padding': 0.25rem 0.5rem,
+    'font-size': 0.875rem,
+    'border-radius': 0.25rem
+  ),
+  'md': (
+    'padding': 0.375rem 0.75rem,
+    'font-size': 1rem,
+    'border-radius': 0.375rem
+  ),
+  'lg': (
+    'padding': 0.5rem 1rem,
+    'font-size': 1.25rem,
+    'border-radius': 0.5rem
+  )
+);
+
+// Common button base styles
+.common-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+}
+
+// Generate solid variant classes
+@each $variant, $colors in $button-variants {
+  .common-btn-#{$variant} {
+    background-color: map-get($colors, 'bg');
+    border-color: map-get($colors, 'border');
+    color: map-get($colors, 'text');
+
+    &:hover:not(:disabled) {
+      background-color: map-get($colors, 'bg-hover');
+      border-color: map-get($colors, 'bg-hover');
+      opacity: 0.9;
+    }
+
+    &:active:not(:disabled) {
+      background-color: map-get($colors, 'bg-hover');
+      border-color: map-get($colors, 'bg-hover');
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+  }
+}
+
+// Generate outline variant classes
+@each $variant, $colors in $button-outline-variants {
+  .common-btn-#{$variant} {
+    background-color: transparent;
+    border-color: map-get($colors, 'border');
+    color: map-get($colors, 'text');
+
+    &:hover:not(:disabled) {
+      background-color: map-get($colors, 'bg-hover');
+      border-color: map-get($colors, 'bg-hover');
+      color: map-get($colors, 'text-hover');
+    }
+
+    &:active:not(:disabled) {
+      background-color: map-get($colors, 'bg-hover');
+      border-color: map-get($colors, 'bg-hover');
+      color: map-get($colors, 'text-hover');
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+  }
+}
+
+// Generate size classes
+@each $size, $properties in $button-sizes {
+  .common-btn-#{$size} {
+    padding: map-get($properties, 'padding');
+    font-size: map-get($properties, 'font-size');
+    border-radius: map-get($properties, 'border-radius');
+  }
+}
+
+// Loading state
+.common-btn-loading {
+  position: relative;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+  }
+}
+
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Icon button variant (for buttons with only icons)
+.common-btn-icon {
+  padding: 0.5rem;
+
+  &.common-btn-sm {
+    padding: 0.25rem;
+  }
+
+  &.common-btn-lg {
+    padding: 0.75rem;
+  }
+}

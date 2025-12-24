@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { AIGenerationInput, AIGenerationResult, LanguageType } from './types';
 import dictionaryService from '../../services/dictionaryService';
 import aiGenerationService, { AIGenerationRequestItem } from '../../services/aiGenerationService';
 import { parseCSV, normalizeColumnName } from '../../utils/csvParser';
+import { CommonButton, ButtonPurpose, ButtonIcons } from '../common';
 import './AIGenerationModal.scss';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -93,13 +94,12 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
             return null;
           }
           return (
-              <Button
-                  size="sm"
-                  variant="outline-danger"
+              <CommonButton
+                  variant={ButtonPurpose.DELETE}
                   onClick={() => handleDeleteInput(params.data?.id || '')}
               >
                 Delete
-              </Button>
+              </CommonButton>
           );
         },
       },
@@ -195,13 +195,12 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
             return null;
           }
           return (
-              <Button
-                  size="sm"
-                  variant="outline-danger"
+              <CommonButton
+                  variant={ButtonPurpose.DELETE}
                   onClick={() => handleDeleteInput(params.data?.id || '')}
               >
                 Delete
-              </Button>
+              </CommonButton>
           );
         },
       },
@@ -641,23 +640,23 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
               Input ({inputData.length})
             </h6>
             <div className="button-group">
-              <Button
-                size="sm"
-                variant="outline-success"
+              <CommonButton
+                variant={ButtonPurpose.UPLOAD}
+                icon={ButtonIcons.UPLOAD}
                 onClick={handleCSVUploadClick}
                 disabled={isGenerating}
                 className="me-2"
               >
-                📤 CSV Upload
-              </Button>
-              <Button
-                size="sm"
-                variant="outline-primary"
+                CSV Upload
+              </CommonButton>
+              <CommonButton
+                variant={ButtonPurpose.ADD}
+                icon={ButtonIcons.ADD}
                 onClick={handleAddRow}
                 disabled={isGenerating}
               >
-                + Add Row
-              </Button>
+                Add Row
+              </CommonButton>
             </div>
           </div>
           <div className="grid-content">
@@ -721,33 +720,33 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
           )}
         </div>
         <div className="footer-buttons">
-          <Button variant="secondary" onClick={handleClose} disabled={isGenerating}>
+          <CommonButton
+            variant={ButtonPurpose.CANCEL}
+            onClick={handleClose}
+            disabled={isGenerating}
+          >
             Cancel
-          </Button>
-          <Button
-            variant="success"
+          </CommonButton>
+          <CommonButton
+            variant={ButtonPurpose.CREATE}
+            icon={ButtonIcons.CREATE}
             onClick={handleCreate}
             disabled={
               isGenerating ||
               resultData.filter((r) => r.status === 'completed').length === 0
             }
           >
-            ✅ Create
-          </Button>
-          <Button
-            variant="primary"
+            Create
+          </CommonButton>
+          <CommonButton
+            variant={ButtonPurpose.GENERATE}
+            icon={ButtonIcons.GENERATE}
             onClick={handleGenerate}
+            loading={isGenerating}
             disabled={isGenerating}
           >
-            {isGenerating ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" />
-                Generating...
-              </>
-            ) : (
-              <>🚀 Generate All</>
-            )}
-          </Button>
+            {isGenerating ? 'Generating...' : 'Generate All'}
+          </CommonButton>
         </div>
       </Modal.Footer>
     </Modal>
