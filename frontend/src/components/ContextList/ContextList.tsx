@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Context } from '../../types/context';
 import contextService from '../../services/contextService';
+import { useSnackbar } from '../common';
 import './ContextList.scss';
 
 interface ContextListProps {
@@ -30,6 +31,7 @@ const ContextList: React.FC<ContextListProps> = ({
     context_name: '',
     description: '',
   });
+  const snackbar = useSnackbar();
 
   useEffect(() => {
     loadContexts();
@@ -60,7 +62,7 @@ const ContextList: React.FC<ContextListProps> = ({
 
   const handleSaveNew = async () => {
     if (!newContext.context_name.trim()) {
-      alert('Context name is required');
+      snackbar.warning('Context name is required', { design: 'minimal' });
       return;
     }
 
@@ -69,8 +71,9 @@ const ContextList: React.FC<ContextListProps> = ({
       setIsAdding(false);
       setNewContext({ context_name: '', description: '' });
       loadContexts();
+      snackbar.success('Context created successfully', { design: 'minimal' });
     } catch (err) {
-      alert('Failed to create context');
+      snackbar.error('Failed to create context', { design: 'minimal' });
       console.error(err);
     }
   };
@@ -95,7 +98,7 @@ const ContextList: React.FC<ContextListProps> = ({
 
   const handleSaveEdit = async (context: Context) => {
     if (!editContext.context_name.trim()) {
-      alert('Context name is required');
+      snackbar.warning('Context name is required', { design: 'minimal' });
       return;
     }
 
@@ -116,13 +119,14 @@ const ContextList: React.FC<ContextListProps> = ({
               : ctx
           )
         );
+        snackbar.success('Context updated successfully', { design: 'minimal' });
       }
 
       setEditingContextId(null);
       setIsEditMode(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update context';
-      alert(errorMessage);
+      snackbar.error(errorMessage, { design: 'minimal' });
       console.error(err);
       // Refresh the list to get the latest data
       loadContexts();
@@ -145,8 +149,9 @@ const ContextList: React.FC<ContextListProps> = ({
       if (selectedContextId === contextId) {
         onSelectContext(0);
       }
+      snackbar.success('Context deleted successfully', { design: 'minimal' });
     } catch (err) {
-      alert('Failed to delete context');
+      snackbar.error('Failed to delete context', { design: 'minimal' });
       console.error(err);
     }
   };

@@ -1,0 +1,512 @@
+/**
+ * Snackbar Styles
+ * Multiple design variants: default, minimal, modern, gradient, outlined
+ */
+
+// Color Palette
+$success-color: #10b981;
+$error-color: #ef4444;
+$warning-color: #f59e0b;
+$info-color: #3b82f6;
+
+$success-bg: #d1fae5;
+$error-bg: #fee2e2;
+$warning-bg: #fef3c7;
+$info-bg: #dbeafe;
+
+$success-dark: #065f46;
+$error-dark: #991b1b;
+$warning-dark: #92400e;
+$info-dark: #1e3a8a;
+
+// Container Positioning
+.snackbar-container {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  max-width: 100%;
+  padding: 20px;
+
+  // Top positions
+  &.snackbar-container-top-left {
+    top: 0;
+    left: 0;
+    align-items: flex-start;
+  }
+
+  &.snackbar-container-top-center {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+
+  &.snackbar-container-top-right {
+    top: 0;
+    right: 0;
+    align-items: flex-end;
+  }
+
+  // Bottom positions
+  &.snackbar-container-bottom-left {
+    bottom: 0;
+    left: 0;
+    align-items: flex-start;
+  }
+
+  &.snackbar-container-bottom-center {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+
+  &.snackbar-container-bottom-right {
+    bottom: 0;
+    right: 0;
+    align-items: flex-end;
+  }
+}
+
+// Base Snackbar
+.snackbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  min-width: 300px;
+  max-width: 500px;
+  pointer-events: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .snackbar-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .snackbar-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .snackbar-message {
+    flex: 1;
+  }
+
+  .snackbar-action {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .snackbar-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Animations
+@keyframes snackbarSlideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes snackbarSlideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes snackbarSlideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes snackbarSlideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes snackbarFadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes snackbarFadeOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+.snackbar-enter {
+  animation: snackbarSlideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.snackbar-exit {
+  animation: snackbarSlideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ============================================
+// DESIGN 1: DEFAULT (Filled background)
+// ============================================
+.snackbar-default {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  &.snackbar-success {
+    background-color: $success-color;
+    color: white;
+
+    .snackbar-action {
+      color: white;
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-error {
+    background-color: $error-color;
+    color: white;
+
+    .snackbar-action {
+      color: white;
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-warning {
+    background-color: $warning-color;
+    color: white;
+
+    .snackbar-action {
+      color: white;
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-info {
+    background-color: $info-color;
+    color: white;
+
+    .snackbar-action {
+      color: white;
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+}
+
+// ============================================
+// DESIGN 2: MINIMAL (Light background)
+// ============================================
+.snackbar-minimal {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &.snackbar-success {
+    background-color: $success-bg;
+    color: $success-dark;
+
+    .snackbar-icon {
+      color: $success-color;
+    }
+
+    .snackbar-action {
+      color: $success-color;
+    }
+  }
+
+  &.snackbar-error {
+    background-color: $error-bg;
+    color: $error-dark;
+
+    .snackbar-icon {
+      color: $error-color;
+    }
+
+    .snackbar-action {
+      color: $error-color;
+    }
+  }
+
+  &.snackbar-warning {
+    background-color: $warning-bg;
+    color: $warning-dark;
+
+    .snackbar-icon {
+      color: $warning-color;
+    }
+
+    .snackbar-action {
+      color: $warning-color;
+    }
+  }
+
+  &.snackbar-info {
+    background-color: $info-bg;
+    color: $info-dark;
+
+    .snackbar-icon {
+      color: $info-color;
+    }
+
+    .snackbar-action {
+      color: $info-color;
+    }
+  }
+}
+
+// ============================================
+// DESIGN 3: MODERN (Elevated with blur)
+// ============================================
+.snackbar-modern {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  &.snackbar-success {
+    background-color: rgba(16, 185, 129, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .snackbar-action {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-error {
+    background-color: rgba(239, 68, 68, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .snackbar-action {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-warning {
+    background-color: rgba(245, 158, 11, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .snackbar-action {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.snackbar-info {
+    background-color: rgba(59, 130, 246, 0.95);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .snackbar-action {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+}
+
+// ============================================
+// DESIGN 4: GRADIENT (Gradient backgrounds)
+// ============================================
+.snackbar-gradient {
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  color: white;
+
+  &.snackbar-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  &.snackbar-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  &.snackbar-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  &.snackbar-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  }
+
+  .snackbar-action {
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  }
+}
+
+// ============================================
+// DESIGN 5: OUTLINED (Border style)
+// ============================================
+.snackbar-outlined {
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-width: 2px;
+  border-style: solid;
+
+  &.snackbar-success {
+    border-color: $success-color;
+    color: $success-dark;
+
+    .snackbar-icon {
+      color: $success-color;
+    }
+
+    .snackbar-action {
+      color: $success-color;
+      &:hover {
+        background: $success-bg;
+      }
+    }
+  }
+
+  &.snackbar-error {
+    border-color: $error-color;
+    color: $error-dark;
+
+    .snackbar-icon {
+      color: $error-color;
+    }
+
+    .snackbar-action {
+      color: $error-color;
+      &:hover {
+        background: $error-bg;
+      }
+    }
+  }
+
+  &.snackbar-warning {
+    border-color: $warning-color;
+    color: $warning-dark;
+
+    .snackbar-icon {
+      color: $warning-color;
+    }
+
+    .snackbar-action {
+      color: $warning-color;
+      &:hover {
+        background: $warning-bg;
+      }
+    }
+  }
+
+  &.snackbar-info {
+    border-color: $info-color;
+    color: $info-dark;
+
+    .snackbar-icon {
+      color: $info-color;
+    }
+
+    .snackbar-action {
+      color: $info-color;
+      &:hover {
+        background: $info-bg;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .snackbar-container {
+    padding: 12px;
+  }
+
+  .snackbar {
+    min-width: 280px;
+    max-width: calc(100vw - 24px);
+  }
+}

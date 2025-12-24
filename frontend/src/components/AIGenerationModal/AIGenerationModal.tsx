@@ -6,7 +6,7 @@ import { AIGenerationInput, AIGenerationResult, LanguageType } from './types';
 import dictionaryService from '../../services/dictionaryService';
 import aiGenerationService, { AIGenerationRequestItem } from '../../services/aiGenerationService';
 import { parseCSV, normalizeColumnName } from '../../utils/csvParser';
-import { CommonButton, ButtonPurpose, ButtonIcons } from '../common';
+import { CommonButton, ButtonPurpose, ButtonIcons, useSnackbar } from '../common';
 import './AIGenerationModal.scss';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -53,6 +53,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
   const resultGridRef = useRef<any>(null);
   const csvFileInputRef = useRef<HTMLInputElement>(null);
   const modalBodyRef = useRef<HTMLDivElement>(null);
+  const snackbar = useSnackbar();
 
   // 좌측 Input Grid 컬럼 정의
   const inputColumnDefs = useMemo<ColDef<AIGenerationInput>[]>(
@@ -314,7 +315,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
 
     // 파일 형식 검증
     if (!file.name.endsWith('.csv')) {
-      alert('Please select a CSV file');
+      snackbar.error('Please select a CSV file', { design: 'minimal' });
       event.target.value = ''; // Reset input
       return;
     }
@@ -322,7 +323,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
     // 파일 크기 제한 (5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert('File size exceeds 5MB limit');
+      snackbar.error('File size exceeds 5MB limit', { design: 'minimal' });
       event.target.value = '';
       return;
     }
@@ -332,7 +333,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       const { headers, rows } = await parseCSV(file);
 
       if (rows.length === 0) {
-        alert('CSV file has no data rows');
+        snackbar.warning('CSV file has no data rows', { design: 'minimal' });
         event.target.value = '';
         return;
       }
@@ -349,7 +350,10 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       const newInputData = mapCSVToInputData(headers, rows.slice(0, 1000));
 
       if (newInputData.length === 0) {
-        alert('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.');
+        snackbar.error('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.', {
+          design: 'minimal',
+          duration: 5000
+        });
         event.target.value = '';
         return;
       }
@@ -367,11 +371,17 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
         setInputData(newInputData);
       }
 
-      alert(`Successfully imported ${newInputData.length} rows from CSV`);
+      snackbar.success(`Successfully imported ${newInputData.length} rows from CSV`, {
+        design: 'minimal',
+        duration: 4000
+      });
     } catch (error) {
       console.error('CSV upload failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to import CSV: ${errorMessage}`);
+      snackbar.error(`Failed to import CSV: ${errorMessage}`, {
+        design: 'minimal',
+        duration: 5000
+      });
     } finally {
       // Reset file input
       event.target.value = '';
@@ -386,7 +396,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
     );
 
     if (validInputs.length === 0) {
-      alert('Please enter at least one term with content');
+      snackbar.warning('Please enter at least one term with content', { design: 'minimal' });
       return;
     }
 
@@ -454,7 +464,10 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       console.error('Generation failed:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Generation failed: ${errorMessage}`);
+      snackbar.error(`Generation failed: ${errorMessage}`, {
+        design: 'minimal',
+        duration: 5000
+      });
 
       // 에러 발생시 모든 generating 상태를 error로 변경
       setResultData((prev) =>
@@ -475,7 +488,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
     );
 
     if (completedResults.length === 0) {
-      alert('No completed results to create');
+      snackbar.warning('No completed results to create', { design: 'minimal' });
       return;
     }
 
@@ -514,7 +527,10 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       const response = await dictionaryService.createDictList(dictionaries);
 
       if (response.success) {
-        alert('Dictionary entries created successfully!');
+        snackbar.success('Dictionary entries created successfully!', {
+          design: 'minimal',
+          duration: 4000
+        });
         // 생성 완료 후 모달 초기화
         setInputData([
           {
@@ -536,7 +552,10 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       console.error('Create failed:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Create failed: ${errorMessage}`);
+      snackbar.error(`Create failed: ${errorMessage}`, {
+        design: 'minimal',
+        duration: 5000
+      });
     }
   };
 

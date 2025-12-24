@@ -6,7 +6,7 @@ import contextService from '../../services/contextService';
 import dictionaryService from '../../services/dictionaryService';
 import AIGenerationModal from '../AIGenerationModal/AIGenerationModal';
 import { parseCSV, normalizeColumnName } from '../../utils/csvParser';
-import { CommonButton, ButtonPurpose, ButtonIcons } from '../common';
+import { CommonButton, ButtonPurpose, ButtonIcons, useSnackbar } from '../common';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -25,6 +25,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   const gridRef = useRef<any>(null);
   const csvFileInputRef = useRef<HTMLInputElement>(null);
+  const snackbar = useSnackbar();
 
   const columnDefs = useMemo<ColDef<DictionaryEntry>[]>(
     () => [
@@ -162,7 +163,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   const handleDeleteDict = useCallback(async (id: number | undefined) => {
     if (!id) {
-      alert('Invalid dictionary ID');
+      snackbar.error('Invalid dictionary ID', { design: 'minimal' });
       return;
     }
 
@@ -176,14 +177,15 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       if (response.success) {
         // 성공 시 로컬 state에서도 삭제
         setRowData((prev) => prev.filter((item) => item.dict_id !== id));
+        snackbar.success('Dictionary entry deleted successfully', { design: 'minimal' });
       } else {
-        alert(response.error || 'Failed to delete dictionary entry');
+        snackbar.error(response.error || 'Failed to delete dictionary entry', { design: 'minimal' });
       }
     } catch (err) {
-      alert('Failed to delete dictionary entry');
+      snackbar.error('Failed to delete dictionary entry', { design: 'minimal' });
       console.error(err);
     }
-  }, []);
+  }, [snackbar]);
 
   const loadDictionaryEntries = async (id: number) => {
     setIsLoading(true);
@@ -205,7 +207,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   const handleAddClick = () => {
     if (!contextId) {
-      alert('Please select a context first');
+      snackbar.warning('Please select a context first', { design: 'minimal' });
       return;
     }
 
@@ -230,7 +232,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   const handleAIGenerateClick = () => {
     if (!contextId) {
-      alert('Please select a context first');
+      snackbar.warning('Please select a context first', { design: 'minimal' });
       return;
     }
     setShowAIModal(true);
@@ -246,7 +248,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
   // CSV Upload 버튼 클릭
   const handleCSVUploadClick = () => {
     if (!contextId) {
-      alert('Please select a context first');
+      snackbar.warning('Please select a context first', { design: 'minimal' });
       return;
     }
     csvFileInputRef.current?.click();
@@ -310,7 +312,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
     // 파일 형식 검증
     if (!file.name.endsWith('.csv')) {
-      alert('Please select a CSV file');
+      snackbar.error('Please select a CSV file', { design: 'minimal' });
       event.target.value = '';
       return;
     }
@@ -318,7 +320,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
     // 파일 크기 제한 (5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert('File size exceeds 5MB limit');
+      snackbar.error('File size exceeds 5MB limit', { design: 'minimal' });
       event.target.value = '';
       return;
     }
@@ -328,7 +330,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       const { headers, rows } = await parseCSV(file);
 
       if (rows.length === 0) {
-        alert('CSV file has no data rows');
+        snackbar.warning('CSV file has no data rows', { design: 'minimal' });
         event.target.value = '';
         return;
       }
@@ -345,7 +347,10 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       const newEntries = mapCSVToDictionaryData(headers, rows.slice(0, 1000));
 
       if (newEntries.length === 0) {
-        alert('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.');
+        snackbar.error('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.', {
+          design: 'minimal',
+          duration: 5000
+        });
         event.target.value = '';
         return;
       }
@@ -371,7 +376,10 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       const response = await dictionaryService.createDictList(dictionaries);
 
       if (response.success) {
-        alert(`Successfully imported ${newEntries.length} entries!`);
+        snackbar.success(`Successfully imported ${newEntries.length} entries!`, {
+          design: 'minimal',
+          duration: 4000
+        });
         // 성공 후 그리드 새로고침
         loadDictionaryEntries(contextId!);
       } else {
@@ -380,7 +388,10 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
     } catch (error) {
       console.error('CSV upload failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to import CSV: ${errorMessage}`);
+      snackbar.error(`Failed to import CSV: ${errorMessage}`, {
+        design: 'minimal',
+        duration: 5000
+      });
     } finally {
       // Reset file input
       event.target.value = '';
@@ -389,7 +400,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
   const handleExportCSV = useCallback(() => {
     if (!rowData || rowData.length === 0) {
-      alert('No data to export');
+      snackbar.warning('No data to export', { design: 'minimal' });
       return;
     }
 
@@ -471,11 +482,11 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
     // URL 해제
     URL.revokeObjectURL(url);
-  }, [rowData]);
+  }, [rowData, snackbar]);
 
   const handleExportJSON = useCallback(() => {
     if (!rowData || rowData.length === 0) {
-      alert('No data to export');
+      snackbar.warning('No data to export', { design: 'minimal' });
       return;
     }
 
@@ -516,7 +527,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
 
     // URL 해제
     URL.revokeObjectURL(url);
-  }, [rowData]);
+  }, [rowData, snackbar]);
 
   const handleCellValueChanged = useCallback(async (params: any) => {
     const updatedData = params.data;
@@ -545,7 +556,7 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       const response = await dictionaryService.updateDict(dictId, updatePayload);
 
       if (!response.success) {
-        alert(response.error || 'Failed to update dictionary entry');
+        snackbar.error(response.error || 'Failed to update dictionary entry', { design: 'minimal' });
         // 실패 시 그리드 새로고침
         if (contextId) {
           loadDictionaryEntries(contextId);
@@ -562,13 +573,13 @@ const DictionaryGrid: React.FC<DictionaryGridProps> = ({ contextId }) => {
       }
     } catch (err) {
       console.error('Failed to update dictionary entry:', err);
-      alert('Failed to update dictionary entry');
+      snackbar.error('Failed to update dictionary entry', { design: 'minimal' });
       // 에러 시 그리드 새로고침
       if (contextId) {
         loadDictionaryEntries(contextId);
       }
     }
-  }, [contextId]);
+  }, [contextId, snackbar]);
 
   return (
     <div className="dictionary-grid-container">
