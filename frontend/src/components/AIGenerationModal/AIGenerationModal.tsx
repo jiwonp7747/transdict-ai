@@ -5,6 +5,7 @@ import { Modal, Button } from 'react-bootstrap';
 import { AIGenerationInput, AIGenerationResult, LanguageType } from './types';
 import dictionaryService from '../../services/dictionaryService';
 import aiGenerationService, { AIGenerationRequestItem } from '../../services/aiGenerationService';
+import { parseCSV, normalizeColumnName } from '../../utils/csvParser';
 import './AIGenerationModal.scss';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -47,6 +48,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const inputGridRef = useRef<any>(null);
   const resultGridRef = useRef<any>(null);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   // 좌측 Input Grid 컬럼 정의
   const inputColumnDefs = useMemo<ColDef<AIGenerationInput>[]>(
@@ -222,6 +224,156 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       actions: ''
     };
     setInputData([...inputData, newRow]);
+  };
+
+  // CSV Upload 버튼 클릭
+  const handleCSVUploadClick = () => {
+    csvFileInputRef.current?.click();
+  };
+
+  // CSV 파일을 Input Grid 데이터로 변환
+  const mapCSVToInputData = (headers: string[], rows: string[][]): AIGenerationInput[] => {
+    // 컬럼명 매핑 테이블 (CSV 헤더 → field 이름)
+    const columnMapping: { [key: string]: string } = {
+      'term_key': 'term_key',
+      'description': 'description',
+      'language': 'language',
+      'content': 'content',
+      // DictionaryGrid의 언어 컬럼들 → content로 매핑 (우선순위: ko > en > ch > ve > ja)
+      'korean': 'ko',
+      'english': 'en',
+      'chinese': 'ch',
+      'vietnamese': 've',
+      'japanese': 'ja',
+    };
+
+    // 헤더를 정규화하고 매핑
+    const headerMap = new Map<number, string>();
+    const languageColumns = new Map<number, string>(); // 언어 컬럼 인덱스 저장
+
+    headers.forEach((header, index) => {
+      const normalized = normalizeColumnName(header);
+      const mappedField = columnMapping[normalized];
+
+      if (mappedField) {
+        if (['ko', 'en', 'ch', 've', 'ja'].includes(mappedField)) {
+          // 언어 컬럼은 별도로 저장
+          languageColumns.set(index, mappedField);
+        } else {
+          headerMap.set(index, mappedField);
+        }
+      }
+    });
+
+    // 각 row를 AIGenerationInput으로 변환
+    return rows.map((row, rowIndex) => {
+      const inputRow: AIGenerationInput = {
+        id: `${Date.now()}_${rowIndex}`,
+        term_key: '',
+        content: '',
+        description: '',
+        language: 'ko',
+        actions: ''
+      };
+
+      // 기본 필드 매핑
+      headerMap.forEach((field, colIndex) => {
+        const value = row[colIndex] || '';
+        if (field in inputRow) {
+          (inputRow as any)[field] = value;
+        }
+      });
+
+      // TODO 사용자 페이지 추가시 그때 기본 언어 반영
+      // 언어 컬럼 중 첫 번째로 값이 있는 컬럼을 content로 사용
+      // 우선순위: ko > en > ch > ve > ja
+      const languagePriority: LanguageType[] = ['ko', 'en', 'ch', 've', 'ja'];
+
+      for (const lang of languagePriority) {
+        const colIndex = Array.from(languageColumns.entries()).find(
+          ([_, mappedLang]) => mappedLang === lang
+        )?.[0];
+
+        if (colIndex !== undefined && row[colIndex]?.trim()) {
+          inputRow.content = row[colIndex].trim();
+          inputRow.language = lang;
+          break;
+        }
+      }
+
+      return inputRow;
+    }).filter(row => row.term_key.trim()); // term_key가 있는 행만 유지
+  };
+
+  // CSV 파일 업로드 핸들러
+  const handleCSVFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 형식 검증
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a CSV file');
+      event.target.value = ''; // Reset input
+      return;
+    }
+
+    // 파일 크기 제한 (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert('File size exceeds 5MB limit');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      // CSV 파싱
+      const { headers, rows } = await parseCSV(file);
+
+      if (rows.length === 0) {
+        alert('CSV file has no data rows');
+        event.target.value = '';
+        return;
+      }
+
+      // 행 개수 제한 (1000개)
+      if (rows.length > 1000) {
+        if (!window.confirm(`CSV has ${rows.length} rows. Only first 1000 rows will be imported. Continue?`)) {
+          event.target.value = '';
+          return;
+        }
+      }
+
+      // CSV 데이터를 Input 데이터로 변환
+      const newInputData = mapCSVToInputData(headers, rows.slice(0, 1000));
+
+      if (newInputData.length === 0) {
+        alert('No valid data found in CSV. Make sure it has "Term Key" column and at least one language column.');
+        event.target.value = '';
+        return;
+      }
+
+      // 기존 데이터에 추가할지 덮어쓸지 선택
+      const shouldAppend = inputData.some(row => row.term_key.trim() || row.content.trim());
+
+      if (shouldAppend) {
+        if (window.confirm(`Found ${newInputData.length} valid rows. Append to existing data (${inputData.length} rows)?`)) {
+          setInputData([...inputData, ...newInputData]);
+        } else if (window.confirm('Replace existing data instead?')) {
+          setInputData(newInputData);
+        }
+      } else {
+        setInputData(newInputData);
+      }
+
+      alert(`Successfully imported ${newInputData.length} rows from CSV`);
+    } catch (error) {
+      console.error('CSV upload failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to import CSV: ${errorMessage}`);
+    } finally {
+      // Reset file input
+      event.target.value = '';
+    }
   };
 
   // AI Generate 실행 (실제 SSE API 연동)
@@ -423,6 +575,15 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
       </Modal.Header>
 
       <Modal.Body>
+        {/* Hidden CSV file input */}
+        <input
+          type="file"
+          ref={csvFileInputRef}
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={handleCSVFileChange}
+        />
+
         {/* 좌측 Input Grid */}
         <div className="grid-section">
           <div className="grid-header">
@@ -430,14 +591,25 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
               <span>📝</span>
               Input ({inputData.length})
             </h6>
-            <Button
-              size="sm"
-              variant="outline-primary"
-              onClick={handleAddRow}
-              disabled={isGenerating}
-            >
-              + Add Row
-            </Button>
+            <div className="button-group">
+              <Button
+                size="sm"
+                variant="outline-success"
+                onClick={handleCSVUploadClick}
+                disabled={isGenerating}
+                className="me-2"
+              >
+                📤 CSV Upload
+              </Button>
+              <Button
+                size="sm"
+                variant="outline-primary"
+                onClick={handleAddRow}
+                disabled={isGenerating}
+              >
+                + Add Row
+              </Button>
+            </div>
           </div>
           <div className="grid-content">
             <div className="ag-theme-alpine" style={{ height: '100%', width: '100%' }}>
