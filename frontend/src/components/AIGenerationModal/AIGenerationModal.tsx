@@ -46,9 +46,12 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
 
   const [resultData, setResultData] = useState<AIGenerationResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [leftWidth, setLeftWidth] = useState<number>(50); // percentage
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const inputGridRef = useRef<any>(null);
   const resultGridRef = useRef<any>(null);
   const csvFileInputRef = useRef<HTMLInputElement>(null);
+  const modalBodyRef = useRef<HTMLDivElement>(null);
 
   // 좌측 Input Grid 컬럼 정의
   const inputColumnDefs = useMemo<ColDef<AIGenerationInput>[]>(
@@ -538,6 +541,52 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
     }
   };
 
+  // 리사이저 핸들러
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing || !modalBodyRef.current) return;
+
+      const containerRect = modalBodyRef.current.getBoundingClientRect();
+      const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+      // Limit between 30% and 70%
+      if (newLeftWidth >= 30 && newLeftWidth <= 70) {
+        setLeftWidth(newLeftWidth);
+      }
+    },
+    [isResizing]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  React.useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
   // 모달 닫기
   const handleClose = () => {
     if (isGenerating) {
@@ -574,7 +623,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
         </Modal.Title>
       </Modal.Header>
 
-      <Modal.Body>
+      <Modal.Body ref={modalBodyRef}>
         {/* Hidden CSV file input */}
         <input
           type="file"
@@ -585,7 +634,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
         />
 
         {/* 좌측 Input Grid */}
-        <div className="grid-section">
+        <div className="grid-section" style={{ width: `${leftWidth}%` }}>
           <div className="grid-header">
             <h6>
               <span>📝</span>
@@ -626,8 +675,11 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
           </div>
         </div>
 
+        {/* 리사이저 */}
+        <div className="modal-resizer" onMouseDown={handleMouseDown} />
+
         {/* 우측 Result Grid */}
-        <div className="grid-section">
+        <div className="grid-section" style={{ width: `${100 - leftWidth}%` }}>
           <div className="grid-header">
             <h6>
               <span>✨</span>

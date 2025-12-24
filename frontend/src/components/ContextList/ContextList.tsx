@@ -6,11 +6,15 @@ import './ContextList.scss';
 interface ContextListProps {
   onSelectContext: (contextId: number) => void;
   selectedContextId: number | null;
+  onToggleCollapse?: () => void;
+  isCollapsed?: boolean;
 }
 
 const ContextList: React.FC<ContextListProps> = ({
   onSelectContext,
   selectedContextId,
+  onToggleCollapse,
+  isCollapsed = false,
 }) => {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,6 +169,29 @@ const ContextList: React.FC<ContextListProps> = ({
           >
             Edit
           </button>
+          {onToggleCollapse && (
+            <button
+              className="collapse-button"
+              onClick={onToggleCollapse}
+              title="Collapse panel"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 12L6 8L10 4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

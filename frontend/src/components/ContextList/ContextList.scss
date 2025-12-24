@@ -25,6 +25,35 @@
 .button-group {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.collapse-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:hover {
+    background: rgba(108, 117, 125, 0.1);
+    color: #495057;
+  }
+
+  &:active {
+    background: rgba(108, 117, 125, 0.15);
+  }
+
+  svg {
+    display: block;
+  }
 }
 
 .list-group {
